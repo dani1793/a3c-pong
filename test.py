@@ -34,6 +34,7 @@ def test(rank, args, shared_model, counter, optimizer):
     # a quick hack to prevent the agent from stucking
     actions = deque(maxlen=100)
     episode_length = 0
+    save_count = 0
     while True:
         env.render()
         
@@ -78,8 +79,13 @@ def test(rank, args, shared_model, counter, optimizer):
             episode_length = 0
             actions.clear()
             state = prepro(env.reset()[0])
+            save_count += 1
+            if save_count % 30 == 0:
+                save_checkpoint(shared_model,optimizer, "checkpoint/num steps {}-episode_reward {}-episode_length {}.pth".format(
+                counter.value,
+                reward_sum, episode_length))
             time.sleep(60)
-
+            
         state = torch.from_numpy(state)
         
 def save_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):

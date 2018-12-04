@@ -64,7 +64,7 @@ if __name__ == '__main__':
         optimizer = my_optim.SharedAdam(shared_model.parameters(), lr=args.lr)
         optimizer.share_memory()
 
-    load_checkpoint(shared_model, optimizer, 'checkpoint/num steps 104561-episode_reward -10-episode_length 22.pth')    
+    # load_checkpoint(shared_model, optimizer, 'checkpoint/num steps 104561-episode_reward -10-episode_length 22.pth')    
     shared_model.share_memory()
     processes = []
 
