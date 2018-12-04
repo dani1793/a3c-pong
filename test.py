@@ -14,7 +14,7 @@ from simple_ai import PongAi
 def test(rank, args, shared_model, counter, optimizer):
     torch.manual_seed(args.seed + rank)
 
-    env = Pong()
+    env = Pong(headless= args.headless)
     # env.seed(args.seed + rank)
 
     model = ActorCritic(1, 3)

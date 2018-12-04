@@ -18,7 +18,7 @@ def ensure_shared_grads(model, shared_model):
 def train(rank, args, shared_model, counter, lock, optimizer=None):
     torch.manual_seed(args.seed + rank)
 
-    env = Pong(headless = False)
+    env = Pong(headless = args.headless)
     # env.seed(args.seed + rank)
     opponent = PongAi(env,2)
     
