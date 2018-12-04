@@ -38,7 +38,7 @@ parser.add_argument('--max-episode-length', type=int, default=1000000,
                     help='maximum length of an episode (default: 1000000)')
 parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
-parser.add_argument("--headless", default=True action="store_true", help="Run in headless mode")
+parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")
 
 def load_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):
     checkpoint = torch.load(filename)
