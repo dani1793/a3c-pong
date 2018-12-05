@@ -79,10 +79,17 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
             actions.clear()
             state = prepro(env.reset()[0])
             save_count += 1
-            
+        if save_count == 30:
+            save_checkpoint(shared_model, optimizer, 'checkpoint-{}'.format(counter.value))
+            save_count = 0
         if test_count == 20:
             test_count = 0
             time.sleep(60)
             
         state = torch.from_numpy(state)
-        
+
+def save_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):
+    torch.save({
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict()
+        }, filename)

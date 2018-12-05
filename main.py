@@ -48,11 +48,7 @@ def load_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
-def save_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):
-    torch.save({
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict()
-        }, filename)
+
 
 def showTestResults(testValue):
     print('inside show Test Results')
