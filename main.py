@@ -11,6 +11,7 @@ from model import ActorCritic
 from test import test
 from train import train
 from pong import Pong
+import time
 
 # Based on
 # https://github.com/pytorch/examples/tree/master/mnist_hogwild
@@ -44,28 +45,38 @@ def load_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):
     checkpoint = torch.load(filename)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
+def save_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):
+    torch.save({
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict()
+        }, filename)
+
+def showTestResults():
+    time.sleep(60)
+    result = testValue.get()
+    print(result[0])
     
     
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
     os.environ['CUDA_VISIBLE_DEVICES'] = ""
-
+    testValue = mp.Queue()
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
     shared_model = ActorCritic(
         1, 3)
-
-
-
     if args.no_shared:
         optimizer = None
     else:
         optimizer = my_optim.SharedAdam(shared_model.parameters(), lr=args.lr)
         optimizer.share_memory()
-
-    # load_checkpoint(shared_model, optimizer, 'checkpoint/num steps 104561-episode_reward -10-episode_length 22.pth')    
+    
+    #load_checkpoint(shared_model, optimizer, 'checkpoint/num steps 8287175-episode_reward -10-episode_length 68.pth')    
+        
     shared_model.share_memory()
+
     processes = []
 
     counter = mp.Value('i', 0)
@@ -74,9 +85,9 @@ if __name__ == '__main__':
     p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter, optimizer))
     p.start()
     processes.append(p)
-
+    showTestResults(testValue);
     for rank in range(0, args.num_processes):
-        p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer))
+        p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer, testValue))
         print('starting training')
         p.start()
         processes.append(p)
@@ -84,3 +95,4 @@ if __name__ == '__main__':
         print('process ends')
         p.join()
 
+    

@@ -11,7 +11,7 @@ from simple_ai import PongAi
 
 
 
-def test(rank, args, shared_model, counter, optimizer):
+def test(rank, args, shared_model, counter, optimizer, testValue):
     torch.manual_seed(args.seed + rank)
 
     env = Pong(headless= args.headless)
@@ -35,6 +35,7 @@ def test(rank, args, shared_model, counter, optimizer):
     actions = deque(maxlen=100)
     episode_length = 0
     save_count = 0
+    test_count = 0
     while True:
         env.render()
         
@@ -54,10 +55,9 @@ def test(rank, args, shared_model, counter, optimizer):
         prob = F.softmax(logit, dim=-1)
         action = prob.max(1, keepdim=True)[1].numpy()
 
-        
         action2 = opponent.get_action()
         
-        (state, obs2), (reward, reward2), done, info = env.step((action[0,0], action2))
+        (obs2, state), (reward2, reward), done, info = env.step((action2,action[0,0]))
         done = done or episode_length >= args.max_episode_length
         reward_sum += reward
         state = prepro(state)
@@ -65,31 +65,24 @@ def test(rank, args, shared_model, counter, optimizer):
         actions.append(action[0, 0])
         if actions.count(actions[0]) == 5000:
             done = True
-
+            test_count += 1
+            
         if done:
-            print("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
+            test_count += 1
+            testValue.put(["Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
                 time.strftime("%Hh %Mm %Ss",
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
-                reward_sum, episode_length))
-            save_checkpoint(shared_model,optimizer, "checkpoint/num steps {}-episode_reward {}-episode_length {}.pth".format(
-                counter.value,
-                reward_sum, episode_length))
+                reward_sum, episode_length), counter.value])
             reward_sum = 0
             episode_length = 0
             actions.clear()
             state = prepro(env.reset()[0])
             save_count += 1
-            if save_count % 30 == 0:
-                save_checkpoint(shared_model,optimizer, "checkpoint/num steps {}-episode_reward {}-episode_length {}.pth".format(
-                counter.value,
-                reward_sum, episode_length))
+            
+        if test_count == 20:
+            test_count = 0
             time.sleep(60)
             
         state = torch.from_numpy(state)
         
-def save_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):
-    torch.save({
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict()
-        }, filename)
