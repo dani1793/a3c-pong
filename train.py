@@ -17,18 +17,11 @@ def ensure_shared_grads(model, shared_model):
 
 def train(rank, args, shared_model, counter, lock, optimizer=None):
     torch.manual_seed(args.seed + rank)
-
-    env = Pong(headless = args.headless)
+    env = Pong(headless = False)
     # env.seed(args.seed + rank)
     opponent = PongAi(env,2)
-    
     model = ActorCritic(1, 3)
-
-    if optimizer is None:
-        optimizer = optim.Adam(shared_model.parameters(), lr=args.lr)
-
     model.train()
-
     state = prepro(env.reset()[0])
     
     state = torch.from_numpy(state)
@@ -49,28 +42,24 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
         log_probs = []
         rewards = []
         entropies = []
-
         for step in range(args.num_steps):
             episode_length += 1
-            inputTensor = state.unsqueeze(0).unsqueeze(0);
+            inputTensor = state.unsqueeze(0).unsqueeze(0); 
             value, logit, (hx, cx) = model((inputTensor,
                                             (hx, cx)))
             prob = F.softmax(logit, dim=-1)
             log_prob = F.log_softmax(logit, dim=-1)
             entropy = -(log_prob * prob).sum(1, keepdim=True)
             entropies.append(entropy)
-
             action = prob.multinomial(num_samples=1).detach()
             log_prob = log_prob.gather(1, action)
-            
             action2 = opponent.get_action()
             (obs2, state), (reward2, reward), done, info = env.step((action2,action.numpy()))
             done = episode_length >= args.max_episode_length
             reward = max(min(reward, 10), -10)
             state = prepro(state)
             with lock:
-                counter.value += 1
-
+                counter.value += 1  
             if done:
                 print('episode_length')
                 print(episode_length)

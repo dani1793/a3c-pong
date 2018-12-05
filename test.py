@@ -38,7 +38,7 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
     test_count = 0
     while True:
         env.render()
-        
+        testValue.put(['test']) 
         episode_length += 1
         # Sync with the shared model
         if done:
@@ -69,11 +69,11 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
             
         if done:
             test_count += 1
-            testValue.put(["Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
+            print("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
                 time.strftime("%Hh %Mm %Ss",
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
-                reward_sum, episode_length), counter.value])
+                reward_sum, episode_length))
             reward_sum = 0
             episode_length = 0
             actions.clear()
