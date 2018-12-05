@@ -52,8 +52,8 @@ def save_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):
         'optimizer_state_dict': optimizer.state_dict()
         }, filename)
 
-def showTestResults():
-    time.sleep(60)
+def showTestResults(testValue):
+    print('inside show Test Results')
     result = testValue.get()
     print(result[0])
     
@@ -82,17 +82,15 @@ if __name__ == '__main__':
     counter = mp.Value('i', 0)
     lock = mp.Lock()
 
-    p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter, optimizer))
+    p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter, optimizer, testValue))
     p.start()
     processes.append(p)
     showTestResults(testValue);
     for rank in range(0, args.num_processes):
-        p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer, testValue))
+        p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer))
         print('starting training')
         p.start()
         processes.append(p)
     for p in processes:
         print('process ends')
         p.join()
-
-    

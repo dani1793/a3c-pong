@@ -4,8 +4,6 @@ import random
 
 class PongAi(object):
     def __init__(self, env, player_id=1):
-        if type(env) is not Pong:
-            raise TypeError("I'm not a very smart AI. All I can play is Pong.")
         self.env = env
         self.player_id = player_id
         self.bpe = 4
