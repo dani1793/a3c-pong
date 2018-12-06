@@ -37,7 +37,6 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
     save_count = 0
     test_count = 0
     while True:
-        env.render()
         testValue.put(['test']) 
         episode_length += 1
         # Sync with the shared model
@@ -80,7 +79,7 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
             state = prepro(env.reset()[0])
             save_count += 1
         if save_count == 30:
-            save_checkpoint(shared_model, optimizer, 'checkpoint-{}'.format(counter.value))
+            save_checkpoint(shared_model, optimizer, 'checkpoint/checkpoint-{}'.format(counter.value))
             save_count = 0
         if test_count == 20:
             test_count = 0
