@@ -23,6 +23,7 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
     
     model.eval()
 
+    env.set_names('Player', opponent.get_name())
     state = prepro(env.reset()[0])
     
     state = torch.from_numpy(state)
@@ -30,7 +31,7 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
     done = True
 
     start_time = time.time()
-
+    
     # a quick hack to prevent the agent from stucking
     actions = deque(maxlen=100)
     episode_length = 0
@@ -38,6 +39,7 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
     test_count = 0
     while True:
         testValue.put(['test']) 
+        env.render()
         episode_length += 1
         # Sync with the shared model
         if done:
@@ -56,7 +58,7 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
 
         action2 = opponent.get_action()
         
-        (obs2, state), (reward2, reward), done, info = env.step((action2,action[0,0]))
+        (state, obs2), (reward, reward2), done, info = env.step((action[0,0], action2))
         done = done or episode_length >= args.max_episode_length
         reward_sum += reward
         state = prepro(state)
@@ -77,11 +79,12 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
             episode_length = 0
             actions.clear()
             state = prepro(env.reset()[0])
-            save_count += 1
         if save_count == 30:
-            save_checkpoint(shared_model, optimizer, 'checkpoint/checkpoint-{}'.format(counter.value))
+            if args.save_progress:
+                save_checkpoint(shared_model, optimizer, 'checkpoint/checkpoint-left-{}'.format(counter.value))
             save_count = 0
         if test_count == 20:
+            save_count += 1
             test_count = 0
             time.sleep(60)
             

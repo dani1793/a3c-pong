@@ -42,6 +42,8 @@ parser.add_argument('--max-episode-length', type=int, default=1000000,
 parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
 parser.add_argument("--headless", default=True, action="store_true", help="Run in headless mode")
+parser.add_argument("--load_checkpoint", default=False, help="Load the checkpoint and run from there")
+parser.add_argument("--save_progress", default=False, help="Save the model parameters when test is run")
 
 def load_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):
     checkpoint = torch.load(filename)
@@ -49,13 +51,11 @@ def load_checkpoint(model, optimizer, filename='/output/checkpoint.pth.tar'):
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
 
-
 def showTestResults(testValue):
     print('inside show Test Results')
     result = testValue.get()
     print(result[0])
-    
-    
+        
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
     os.environ['CUDA_VISIBLE_DEVICES'] = ""
@@ -70,8 +70,9 @@ if __name__ == '__main__':
     else:
         optimizer = my_optim.SharedAdam(shared_model.parameters(), lr=args.lr)
         optimizer.share_memory()
-    
-    #load_checkpoint(shared_model, optimizer, 'checkpoint/num steps 8287175-episode_reward -10-episode_length 68.pth')    
+    if args.load_checkpoint:
+       load_checkpoint(shared_model, optimizer, args.load_checkpoint)
+
         
     shared_model.share_memory()
 
