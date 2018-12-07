@@ -39,7 +39,7 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
     test_count = 0
     while True:
         testValue.put(['test']) 
-        env.render()
+#        env.render()
         episode_length += 1
         # Sync with the shared model
         if done:
