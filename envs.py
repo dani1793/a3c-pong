@@ -7,7 +7,7 @@ def prepro(frame):
      im = Image.fromarray(frame)
      im = im.convert('L'); # convert to gray scale
      frame = np.asarray(im).copy() # copy to numpy array
-     frame = frame[34:34 + 210, :210]
+     #frame = frame[34:34 + 210, :210]
     # Resize by half, then down to 42x42 (essentially mipmapping). If
     # we resize directly we lose pixels that, when mapped to 42x42,
     # aren't close enough to the pixel boundary.

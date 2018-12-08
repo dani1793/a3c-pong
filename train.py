@@ -26,6 +26,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
     
     state = torch.from_numpy(state)
     done = True
+    game_done = 0
 
     episode_length = 0
     while True:
@@ -55,16 +56,20 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
             log_prob = log_prob.gather(1, action)
             action2 = opponent.get_action()
             (state, obs2), (reward, reward2), done, info = env.step((action.numpy(), action2))
-            done = done or episode_length >= args.max_episode_length
+            if done:
+                game_done +=1
+            done = game_done == 19 or episode_length >= args.max_episode_length
             reward = max(min(reward, 10), -10)
             state = prepro(state)
             with lock:
                 counter.value += 1  
             if done:
-                print('episode_length')
-                print(episode_length)
+               # print('episode_length')
+               # print(episode_length)
                 episode_length = 0
                 state = prepro(env.reset()[0])
+            if game_done == 19:
+                game_done = 0
             state = torch.from_numpy(state)
             values.append(value)
             log_probs.append(log_prob)
