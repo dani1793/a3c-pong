@@ -4,7 +4,7 @@ from collections import deque
 import torch
 import torch.nn.functional as F
 
-from envs import prepro
+from envs import ObsNorm
 from model import ActorCritic
 from pong import Pong
 from simple_ai import PongAi
@@ -20,11 +20,11 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
     model = ActorCritic(1, 3)
     
     opponent = PongAi(env, 2)
-    
+    obsNorm = ObsNorm()
     model.eval()
 
     env.set_names('Player', opponent.get_name())
-    state = prepro(env.reset()[0])
+    state = obsNorm.prepro(env.reset()[0])
     
     state = torch.from_numpy(state)
     reward_sum = 0
@@ -39,7 +39,7 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
     test_count = 0
     while True:
         testValue.put(['test']) 
-#        env.render()
+        env.render()
         episode_length += 1
         # Sync with the shared model
         if done:
@@ -51,7 +51,7 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
             hx = hx.detach()
 
         with torch.no_grad():
-            inputTensor = state.unsqueeze(0).unsqueeze(0);
+            inputTensor = state.unsqueeze(0);
             value, logit, (hx, cx) = model((inputTensor, (hx, cx)))
         prob = F.softmax(logit, dim=-1)
         action = prob.max(1, keepdim=True)[1].numpy()
@@ -61,7 +61,7 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
         (state, obs2), (reward, reward2), done, info = env.step((action[0,0], action2))
         done = done or episode_length >= args.max_episode_length
         reward_sum += reward
-        state = prepro(state)
+        state = obsNorm.prepro(state)
         # a quick hack to prevent the agent from stucking
         actions.append(action[0, 0])
         if actions.count(actions[0]) == 5000:
@@ -78,7 +78,8 @@ def test(rank, args, shared_model, counter, optimizer, testValue):
             reward_sum = 0
             episode_length = 0
             actions.clear()
-            state = prepro(env.reset()[0])
+            obsNorm.reset()
+            state = obsNorm.prepro(env.reset()[0])
         if save_count == 30:
             if args.save_progress:
                 save_checkpoint(shared_model, optimizer, 'checkpoint/checkpoint-left-{}'.format(counter.value))

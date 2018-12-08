@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from envs import prepro
+from envs import ObsNorm
 from model import ActorCritic
 from pong import Pong
 from simple_ai import PongAi
@@ -22,7 +22,9 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
     opponent = PongAi(env,2)
     model = ActorCritic(1, 3)
     model.train()
-    state = prepro(env.reset()[0])
+    
+    obsNorm = ObsNorm()
+    state = obsNorm.prepro(env.reset()[0])
     
     state = torch.from_numpy(state)
     done = True
@@ -45,7 +47,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
         entropies = []
         for step in range(args.num_steps):
             episode_length += 1
-            inputTensor = state.unsqueeze(0).unsqueeze(0); 
+            inputTensor = state.unsqueeze(0); 
             value, logit, (hx, cx) = model((inputTensor,
                                             (hx, cx)))
             prob = F.softmax(logit, dim=-1)
@@ -60,14 +62,15 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
                 game_done +=1
             done = game_done == 19 or episode_length >= args.max_episode_length
             reward = max(min(reward, 10), -10)
-            state = prepro(state)
+            state = obsNorm.prepro(state)
             with lock:
                 counter.value += 1  
             if done:
                # print('episode_length')
                # print(episode_length)
                 episode_length = 0
-                state = prepro(env.reset()[0])
+                obsNorm.reset()
+                state = obsNorm.prepro(env.reset()[0])
             if game_done == 19:
                 game_done = 0
             state = torch.from_numpy(state)
@@ -80,7 +83,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
 
         R = torch.zeros(1, 1)
         if not done:
-            value, _, _ = model((state.unsqueeze(0).unsqueeze(0), (hx, cx)))
+            value, _, _ = model((state.unsqueeze(0), (hx, cx)))
             R = value.detach()
 
         values.append(R)
