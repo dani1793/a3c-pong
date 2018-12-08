@@ -55,7 +55,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
             log_prob = log_prob.gather(1, action)
             action2 = opponent.get_action()
             (state, obs2), (reward, reward2), done, info = env.step((action.numpy(), action2))
-            done = episode_length >= args.max_episode_length
+            done = done or episode_length >= args.max_episode_length
             reward = max(min(reward, 10), -10)
             state = prepro(state)
             with lock:
