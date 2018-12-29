@@ -6,5 +6,5 @@ Apart from final model there are also some interesting models in saved_models fo
 1. checkpoint-defensive is an overfitted model for simple-ai. It play long games with the opponent and have high win probability
 2. checkpoint-offensive is a generic model that could be used to play against general opponents but it has low win probability.
 
-The train folder consist of two folders namely policy_gradient and a3c. These contain the environment and files that were used for training and testing the agents for the RL techniques.
+The policy gradient folder contains training performed using policy gradient technique
 
